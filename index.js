@@ -5,13 +5,8 @@ const { Server } = require("socket.io");
 
 const app = express();
 
-// 1. dist 서빙
+// 1. static 먼저
 app.use(express.static(path.join(__dirname, "dist")));
-
-// 2. SPA fallback (이게 핵심)
-app.get("*", (req, res) => {
-  res.sendFile(path.join(__dirname, "dist", "index.html"));
-});
 
 const server = http.createServer(app);
 
@@ -19,6 +14,7 @@ const io = new Server(server, {
   cors: { origin: "*" },
 });
 
+// socket
 io.on("connection", (socket) => {
   console.log("connected:", socket.id);
 
@@ -37,6 +33,11 @@ io.on("connection", (socket) => {
   socket.on("viewer-joined", () => {
     socket.broadcast.emit("viewer-joined", socket.id);
   });
+});
+
+// 2. fallback 반드시 마지막
+app.use((req, res) => {
+  res.sendFile(path.join(__dirname, "dist", "index.html"));
 });
 
 server.listen(3000, "0.0.0.0");
